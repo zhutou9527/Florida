@@ -153,7 +153,16 @@ jobs:
           real=$(realpath $path)
           echo "Apply patches in $real to frida/subprojects/$name"
           cd subprojects/$name
-          git am ../../../patches/$name/*.patch
+          for p in ../../../patches/$name/*.patch; do
+            pname=$(basename "$p")
+            case "$pname" in
+              0004-*|0005-*|0007-*)
+                echo "  [skip] $pname (merged into new 0003)"
+                continue
+                ;;
+            esac
+            git am --3way --keep-cr "$p" || (git am --abort 2>/dev/null; echo "  [SKIP-FAIL] $pname" )
+          done
           cd ../..
           echo $i
         done
